@@ -26,9 +26,53 @@ void simulateDVR(const vector<vector<int>>& graph) {
     int n = graph.size();
     vector<vector<int>> dist = graph;
     vector<vector<int>> nextHop(n, vector<int>(n));
-
-    //TODO: Complete this
-
+    
+    // Initialize the next hop table
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < n; ++j) {
+            if (i == j) {
+                nextHop[i][j] = -1; // No hop needed for self
+            } else if (graph[i][j] != INF && graph[i][j] != 0) {
+                nextHop[i][j] = j; // Direct neighbor
+            } else {
+                nextHop[i][j] = -1; // No path known yet
+            }
+        }
+    }
+    
+    // Print initial tables
+    cout << "--- DVR Initial Tables ---\n";
+    for (int i = 0; i < n; ++i) printDVRTable(i, dist, nextHop);
+    
+    bool changed;
+    int iteration = 1;
+    
+    do {
+        changed = false;
+        
+        // Each node shares its distance vector with neighbors
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < n; ++j) {
+                if (i != j && graph[i][j] != INF && graph[i][j] != 0) { // For each neighbor
+                    for (int k = 0; k < n; ++k) { // For each destination
+                        // If there's a better path through neighbor j
+                        if (dist[i][k] > graph[i][j] + dist[j][k] && dist[j][k] != INF) {
+                            dist[i][k] = graph[i][j] + dist[j][k];
+                            nextHop[i][k] = j;
+                            changed = true;
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (changed) {
+            cout << "--- DVR Iteration " << iteration++ << " ---\n";
+            for (int i = 0; i < n; ++i) printDVRTable(i, dist, nextHop);
+        }
+        
+    } while (changed);
+    
     cout << "--- DVR Final Tables ---\n";
     for (int i = 0; i < n; ++i) printDVRTable(i, dist, nextHop);
 }
@@ -55,7 +99,33 @@ void simulateLSR(const vector<vector<int>>& graph) {
         vector<bool> visited(n, false);
         dist[src] = 0;
         
-         //TODO: Complete this
+        // Dijkstra's algorithm for LSR
+        for (int count = 0; count < n; ++count) {
+            // Find vertex with minimum distance
+            int u = -1;
+            int minDist = INF;
+            for (int v = 0; v < n; ++v) {
+                if (!visited[v] && dist[v] < minDist) {
+                    minDist = dist[v];
+                    u = v;
+                }
+            }
+            
+            // If we can't find a vertex, break
+            if (u == -1) break;
+            
+            // Mark the vertex as visited
+            visited[u] = true;
+            
+            // Update distances of adjacent vertices
+            for (int v = 0; v < n; ++v) {
+                if (!visited[v] && graph[u][v] != 0 && graph[u][v] != INF && 
+                    dist[u] + graph[u][v] < dist[v]) {
+                    dist[v] = dist[u] + graph[u][v];
+                    prev[v] = u;
+                }
+            }
+        }
         
         printLSRTable(src, dist, prev);
     }
@@ -97,4 +167,3 @@ int main(int argc, char *argv[]) {
 
     return 0;
 }
-
